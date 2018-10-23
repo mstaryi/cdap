@@ -96,7 +96,6 @@ if (!isModeProduction(mode)) {
   plugins.push(
     new ForkTsCheckerWebpackPlugin({
       tsconfig: __dirname + '/tsconfig.json',
-      tslint: __dirname + '/tslint.json',
       // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
       memoryLimit: 4096,
     })
@@ -133,6 +132,22 @@ var rules = [
       /lib/,
       /wrangler_dist/,
     ],
+  },
+  {
+    test: /\.tsx?$/,
+    enforce: 'pre',
+    use: [
+      {
+        loader: 'tslint-loader',
+        options: {
+          tsconfig: __dirname + '/tsconfig.json',
+          configFile: __dirname + '/tslint.json',
+          fix: true,
+        },
+      },
+    ],
+    exclude: [/node_modules/, /lib/],
+    include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
     test: /\.js$/,
