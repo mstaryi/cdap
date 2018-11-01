@@ -27,8 +27,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +45,7 @@ import java.util.stream.IntStream;
  */
 @Singleton
 public final class LocalMetricsCollectionService extends AggregatedMetricsCollectionService {
+  private static final Logger LOG = LoggerFactory.getLogger(LocalMetricsCollectionService.class);
 
   private static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
     ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
@@ -51,6 +56,8 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   private ScheduledExecutorService scheduler;
   private MessagingMetricsProcessorServiceFactory messagingMetricsProcessorFactory;
   private MessagingMetricsProcessorService messagingMetricsProcessor;
+  private long userMetricsCount = 0L;
+  private long systemMetricsCount = 0L;
 
   @Inject
   LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore) {
@@ -69,9 +76,52 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   @Override
   protected void publish(Iterator<MetricValues> metrics) {
+    Map<Integer, Long> oldWriteTime = getWriteTime();
+    Map<Integer, Long> oldMetricsCount = getMetricsCount();
+    long startTime = System.currentTimeMillis();
+    long count = 0;
     while (metrics.hasNext()) {
-      metricStore.add(metrics.next());
+      count++;
+      MetricValues next = metrics.next();
+      if (next.getTags().containsKey(Constants.Metrics.Tag.SCOPE)) {
+        userMetricsCount++;
+      } else {
+        systemMetricsCount++;
+      }
+      metricStore.add(next);
     }
+    long duration = System.currentTimeMillis() - startTime;
+    if (count > 100) {
+      Map<Integer, Long> newWriteTime = getWriteTime();
+      Map<Integer, Long> newMetricsCount = getMetricsCount();
+      Map<Integer, Long> timeElapsed = new HashMap<>();
+      Map<Integer, Long> writeHappened = new HashMap<>();
+      for (Map.Entry<Integer, Long> entry : oldWriteTime.entrySet()) {
+        timeElapsed.put(entry.getKey(), newWriteTime.get(entry.getKey()) - entry.getValue());
+      }
+
+      for (Map.Entry<Integer, Long> entry : oldMetricsCount.entrySet()) {
+        writeHappened.put(entry.getKey(), newMetricsCount.get(entry.getKey()) - entry.getValue());
+      }
+      LOG.info("Added {} metrics in one publish for {} milliseconds, the time happened in leveldb write" +
+                 "is: {}, the number of level db writes is: {}", count, duration, timeElapsed, writeHappened);
+    }
+  }
+
+  public long getUserMetricsCount() {
+    return userMetricsCount;
+  }
+
+  public long getSystemMetricsCount() {
+    return systemMetricsCount;
+  }
+
+  public Map<Integer, Long> getMetricsCount() {
+    return metricStore.getCounts();
+  }
+
+  public Map<Integer, Long> getWriteTime() {
+    return metricStore.getWriteTime();
   }
 
   @Override

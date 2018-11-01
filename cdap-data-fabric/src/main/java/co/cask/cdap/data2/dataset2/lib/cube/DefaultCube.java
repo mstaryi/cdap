@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,24 @@ public class DefaultCube implements Cube, MeteredDataset {
       resolutionToFactTable.put(resolution, factTableSupplier.get(resolution, 3600));
     }
     this.aggregationAliasMap = aggregationAliasMap;
+  }
+
+  @Override
+  public Map<Integer, Long> getCounts() {
+    Map<Integer, Long> results = new HashMap<>();
+    for (Map.Entry<Integer, FactTable> entry : resolutionToFactTable.entrySet()) {
+      results.put(entry.getKey(), entry.getValue().getCount());
+    }
+    return results;
+  }
+
+  @Override
+  public Map<Integer, Long> getWriteTime() {
+    Map<Integer, Long> results = new HashMap<>();
+    for (Map.Entry<Integer, FactTable> entry : resolutionToFactTable.entrySet()) {
+      results.put(entry.getKey(), entry.getValue().getWriteTime());
+    }
+    return results;
   }
 
   @Override

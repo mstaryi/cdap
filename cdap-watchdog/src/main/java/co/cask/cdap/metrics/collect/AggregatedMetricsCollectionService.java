@@ -225,6 +225,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
   private final class MetricsContextImpl implements MetricsContext {
 
     private final Map<String, String> tags;
+    private long timeElapsed = 0L;
 
     private MetricsContextImpl(final Map<String, String> tags) {
       this.tags = ImmutableMap.copyOf(tags);
@@ -232,12 +233,29 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
 
     @Override
     public void increment(String metricName, long value) {
+      long startTime = System.currentTimeMillis();
       emitters.getUnchecked(tags).getUnchecked(metricName).increment(value);
+      long duration = System.currentTimeMillis() - startTime;
+      if (duration > 1000) {
+        LOG.info("The increment call takes more than 1 second to finish, took {} milliseconds", duration);
+      }
+      timeElapsed += duration;
     }
 
     @Override
     public void gauge(String metricName, long value) {
+      long startTime = System.currentTimeMillis();
       emitters.getUnchecked(tags).getUnchecked(metricName).gauge(value);
+      long duration = System.currentTimeMillis() - startTime;
+      if (duration > 1000) {
+        LOG.info("The increment call takes more than 1 second to finish, took {} milliseconds", duration);
+      }
+      timeElapsed += duration;
+    }
+
+    @Override
+    public long getTime() {
+      return timeElapsed;
     }
 
     @Override

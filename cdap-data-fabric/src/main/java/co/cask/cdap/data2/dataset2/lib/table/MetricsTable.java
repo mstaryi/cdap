@@ -91,5 +91,12 @@ public interface MetricsTable extends Dataset {
    */
   Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable FuzzyRowFilter filter);
 
+  default long getCount() {
+    return 0L;
+  }
+
+  default long getWriteTime() {
+    return 0L;
+  }
 }
 

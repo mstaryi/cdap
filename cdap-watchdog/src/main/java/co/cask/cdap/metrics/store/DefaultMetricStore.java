@@ -265,6 +265,16 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Override
+  public Map<Integer, Long> getCounts() {
+    return cube.get().getCounts();
+  }
+
+  @Override
+  public Map<Integer, Long> getWriteTime() {
+    return cube.get().getWriteTime();
+  }
+
+  @Override
   public void setMetricsContext(MetricsContext metricsContext) {
     this.metricsContext = metricsContext;
   }
