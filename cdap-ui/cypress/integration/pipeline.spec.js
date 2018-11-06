@@ -57,7 +57,8 @@ describe('Creating a pipeline', function() {
     });
   });
 
-  beforeEach(function() {
+  // make sure to clean up TEST_PIPELINE_NAME pipeline in case any test fails before deleting the pipeline
+  afterEach(function() {
     cy.request({
       method: 'GET',
       url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
