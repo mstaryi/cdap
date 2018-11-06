@@ -23,7 +23,8 @@ function MacroWidgetToggleController(myHelpers, $timeout, $scope, HydratorPlusPl
   vm.editorTypeWidgets = [
     'scala-editor',
     'javascript-editor',
-    'python-editor'
+    'python-editor',
+    'plain-text-editor'
   ];
 
   vm.containsMacro = false;
