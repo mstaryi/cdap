@@ -58,7 +58,7 @@ describe('Creating a pipeline', function() {
   });
 
   // make sure to clean up TEST_PIPELINE_NAME pipeline in case any test fails before deleting the pipeline
-  afterEach(function() {
+  beforeEach(function() {
     cy.request({
       method: 'GET',
       url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
@@ -79,7 +79,7 @@ describe('Creating a pipeline', function() {
     cy.visit('/');
     cy.get('#resource-center-btn').click();
     cy.contains('Create').click();
-    cy.url().should('include', '/pipelines');
+    cy.url().should('include', '/studio');
 
     // Add an action node, to create minimal working pipeline
     cy.get('.item')
@@ -123,7 +123,7 @@ describe('Creating a pipeline', function() {
     cy.get('[data-testid=deploy-pipeline]').click();
 
     // Do assertions
-    cy.url().should('include', '/view/__UI_test_pipeline');
+    cy.url({ timeout: 10000 }).should('include', `/view/${TEST_PIPELINE_NAME}`);
     cy.contains(TEST_PIPELINE_NAME);
     cy.contains('FileDelete');
     cy.contains('Configure').click();
@@ -143,6 +143,6 @@ describe('Creating a pipeline', function() {
       .click();
 
     // Assert pipeline no longer exists
-    cy.contains(TEST_PIPELINE_NAME).should('not.exist');
+    cy.contains('a', TEST_PIPELINE_NAME, { timeout: 10000 }).should('not.exist');
   });
 });
